@@ -1,0 +1,86 @@
+
+{
+  "name": "emprestimos",
+  "options": {
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["livro_id", "usuario_nome", "usuario_email", "data_emprestimo", "data_devolucao_prevista", "status", "createdAt"],
+        "properties": {
+          "livro_id": {
+            "bsonType": "string",
+            "description": "ID do livro emprestado"
+          },
+          "usuario_nome": {
+            "bsonType": "string",
+            "minLength": 2,
+            "maxLength": 100,
+            "description": "Nome do usuário que fez o empréstimo"
+          },
+          "usuario_email": {
+            "bsonType": "string",
+            "pattern": "^[^@]+@[^@]+\\.[^@]+$",
+            "description": "Email do usuário"
+          },
+          "usuario_telefone": {
+            "bsonType": "string",
+            "description": "Telefone do usuário"
+          },
+          "data_emprestimo": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data do empréstimo"
+          },
+          "data_devolucao_prevista": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data prevista para devolução"
+          },
+          "data_devolucao_real": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data real da devolução"
+          },
+          "status": {
+            "bsonType": "string",
+            "enum": ["ativo", "devolvido", "atrasado", "renovado"],
+            "description": "Status atual do empréstimo"
+          },
+          "observacoes": {
+            "bsonType": "string",
+            "maxLength": 500,
+            "description": "Observações sobre o empréstimo"
+          },
+          "multa": {
+            "bsonType": "number",
+            "minimum": 0,
+            "description": "Valor da multa por atraso"
+          },
+          "renovacoes": {
+            "bsonType": "int",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Número de renovações feitas"
+          },
+          "creator": {
+            "bsonType": "string",
+            "description": "Funcionário que registrou o empréstimo"
+          },
+          "createdAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de criação do registro"
+          },
+          "updatedAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data da última atualização"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validationLevel": "moderate",
+    "validationAction": "warn"
+  }
+}

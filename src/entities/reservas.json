@@ -1,0 +1,81 @@
+
+{
+  "name": "reservas",
+  "options": {
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["livro_id", "usuario_nome", "usuario_email", "data_reserva", "status", "createdAt"],
+        "properties": {
+          "livro_id": {
+            "bsonType": "string",
+            "description": "ID do livro reservado"
+          },
+          "usuario_nome": {
+            "bsonType": "string",
+            "minLength": 2,
+            "maxLength": 100,
+            "description": "Nome do usuário que fez a reserva"
+          },
+          "usuario_email": {
+            "bsonType": "string",
+            "pattern": "^[^@]+@[^@]+\\.[^@]+$",
+            "description": "Email do usuário"
+          },
+          "usuario_telefone": {
+            "bsonType": "string",
+            "description": "Telefone do usuário"
+          },
+          "data_reserva": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data da reserva"
+          },
+          "data_expiracao": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de expiração da reserva"
+          },
+          "data_notificacao": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data da notificação de disponibilidade"
+          },
+          "status": {
+            "bsonType": "string",
+            "enum": ["ativa", "notificada", "expirada", "cancelada", "atendida"],
+            "description": "Status da reserva"
+          },
+          "prioridade": {
+            "bsonType": "int",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Prioridade na fila (1 = maior prioridade)"
+          },
+          "observacoes": {
+            "bsonType": "string",
+            "maxLength": 300,
+            "description": "Observações sobre a reserva"
+          },
+          "creator": {
+            "bsonType": "string",
+            "description": "Funcionário que registrou a reserva"
+          },
+          "createdAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de criação do registro"
+          },
+          "updatedAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data da última atualização"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validationLevel": "moderate",
+    "validationAction": "warn"
+  }
+}

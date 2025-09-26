@@ -1,0 +1,87 @@
+
+{
+  "name": "autores",
+  "options": {
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["nome", "ativo", "createdAt"],
+        "properties": {
+          "nome": {
+            "bsonType": "string",
+            "minLength": 2,
+            "maxLength": 100,
+            "description": "Nome completo do autor"
+          },
+          "nome_artistico": {
+            "bsonType": "string",
+            "maxLength": 100,
+            "description": "Nome artístico ou pseudônimo"
+          },
+          "biografia": {
+            "bsonType": "string",
+            "maxLength": 1000,
+            "description": "Biografia do autor"
+          },
+          "data_nascimento": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de nascimento"
+          },
+          "data_falecimento": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de falecimento (se aplicável)"
+          },
+          "nacionalidade": {
+            "bsonType": "string",
+            "maxLength": 50,
+            "description": "Nacionalidade do autor"
+          },
+          "generos_literarios": {
+            "bsonType": "array",
+            "items": {
+              "bsonType": "string"
+            },
+            "description": "Gêneros literários que o autor escreve"
+          },
+          "foto_url": {
+            "bsonType": "string",
+            "description": "URL da foto do autor"
+          },
+          "site_oficial": {
+            "bsonType": "string",
+            "description": "Site oficial do autor"
+          },
+          "ativo": {
+            "bsonType": "bool",
+            "description": "Se o autor está ativo no sistema"
+          },
+          "total_livros": {
+            "bsonType": "int",
+            "minimum": 0,
+            "description": "Total de livros do autor no acervo"
+          },
+          "creator": {
+            "bsonType": "string",
+            "description": "Usuário que cadastrou o autor"
+          },
+          "createdAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de criação do registro"
+          },
+          "updatedAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data da última atualização"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validationLevel": "moderate",
+    "validationAction": "warn"
+  }
+}
+

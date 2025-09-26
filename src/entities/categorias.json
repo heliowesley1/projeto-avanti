@@ -1,0 +1,67 @@
+
+{
+  "name": "categorias",
+  "options": {
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["nome", "codigo", "ativa", "createdAt"],
+        "properties": {
+          "nome": {
+            "bsonType": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "description": "Nome da categoria"
+          },
+          "codigo": {
+            "bsonType": "string",
+            "minLength": 2,
+            "maxLength": 10,
+            "description": "Código identificador da categoria"
+          },
+          "descricao": {
+            "bsonType": "string",
+            "maxLength": 200,
+            "description": "Descrição da categoria"
+          },
+          "cor": {
+            "bsonType": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "description": "Cor hexadecimal para identificação visual"
+          },
+          "ativa": {
+            "bsonType": "bool",
+            "description": "Se a categoria está ativa"
+          },
+          "ordem": {
+            "bsonType": "int",
+            "minimum": 1,
+            "description": "Ordem de exibição"
+          },
+          "total_livros": {
+            "bsonType": "int",
+            "minimum": 0,
+            "description": "Total de livros nesta categoria"
+          },
+          "creator": {
+            "bsonType": "string",
+            "description": "Usuário que criou a categoria"
+          },
+          "createdAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de criação do registro"
+          },
+          "updatedAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data da última atualização"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validationLevel": "moderate",
+    "validationAction": "warn"
+  }
+}

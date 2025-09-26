@@ -1,0 +1,96 @@
+
+{
+  "name": "livros",
+  "options": {
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "required": ["titulo", "autor", "isbn", "categoria", "ano_publicacao", "disponivel", "createdAt"],
+        "properties": {
+          "titulo": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Título do livro"
+          },
+          "autor": {
+            "bsonType": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Nome do autor"
+          },
+          "isbn": {
+            "bsonType": "string",
+            "pattern": "^[0-9-]{10,17}$",
+            "description": "Código ISBN do livro"
+          },
+          "categoria": {
+            "bsonType": "string",
+            "enum": ["ficcao", "nao_ficcao", "romance", "misterio", "fantasia", "ciencia", "historia", "biografia", "tecnologia", "educacao"],
+            "description": "Categoria do livro"
+          },
+          "ano_publicacao": {
+            "bsonType": "int",
+            "minimum": 1000,
+            "maximum": 2025,
+            "description": "Ano de publicação"
+          },
+          "editora": {
+            "bsonType": "string",
+            "maxLength": 100,
+            "description": "Nome da editora"
+          },
+          "paginas": {
+            "bsonType": "int",
+            "minimum": 1,
+            "description": "Número de páginas"
+          },
+          "sinopse": {
+            "bsonType": "string",
+            "maxLength": 1000,
+            "description": "Resumo do livro"
+          },
+          "capa_url": {
+            "bsonType": "string",
+            "description": "URL da imagem da capa"
+          },
+          "disponivel": {
+            "bsonType": "bool",
+            "description": "Se o livro está disponível para empréstimo"
+          },
+          "quantidade_total": {
+            "bsonType": "int",
+            "minimum": 1,
+            "description": "Quantidade total de exemplares"
+          },
+          "quantidade_disponivel": {
+            "bsonType": "int",
+            "minimum": 0,
+            "description": "Quantidade disponível para empréstimo"
+          },
+          "localizacao": {
+            "bsonType": "string",
+            "description": "Localização física na biblioteca"
+          },
+          "creator": {
+            "bsonType": "string",
+            "description": "Usuário que cadastrou o livro"
+          },
+          "createdAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data de criação do registro"
+          },
+          "updatedAt": {
+            "bsonType": "string",
+            "title": "datetime",
+            "description": "Data da última atualização"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "validationLevel": "moderate",
+    "validationAction": "warn"
+  }
+}
