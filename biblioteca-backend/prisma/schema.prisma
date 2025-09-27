@@ -1,0 +1,123 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- MODELO LIVRO (Referencia Emprestimo e Reserva) ---
+model Livro {
+    id                    String      @id @default(uuid())
+    titulo                String      @db.VarChar(200)
+    autor                 String      @db.VarChar(100)
+    isbn                  String      @db.VarChar(17) @unique
+    categoria             String
+    anoPublicacao         Int         @map("ano_publicacao")
+    editora               String?     @db.VarChar(100)
+    paginas               Int?
+    sinopse               String?     @db.VarChar(1000)
+    capaUrl               String?     @map("capa_url")
+    disponivel            Boolean
+    quantidadeTotal       Int         @default(1) @map("quantidade_total")
+    quantidadeDisponivel  Int         @default(1) @map("quantidade_disponivel")
+    localizacao           String?     @db.VarChar(50)
+    
+    // Datas de Controle
+    createdAt             DateTime    @default(now()) @map("created_at")
+    updatedAt             DateTime    @updatedAt @map("updated_at")
+
+    // Relações 
+    emprestimos           Emprestimo[] // Correção: Garante que o modelo Emprestimo está definido
+    reservas              Reserva[]    // Correção: Garante que o modelo Reserva está definido
+    
+    @@map("livros") 
+}
+
+// --- MODELO EMPRESTIMO (Definição que estava faltando/truncada) ---
+model Emprestimo {
+    id                    String    @id @default(uuid())
+    livroId               String    @map("livro_id")
+    usuarioNome           String    @db.VarChar(100) @map("usuario_nome")
+    usuarioEmail          String    @map("usuario_email")
+    usuarioTelefone       String?   @map("usuario_telefone")
+    dataEmprestimo        DateTime  @map("data_emprestimo")
+    dataDevolucaoPrevista DateTime  @map("data_devolucao_prevista")
+    dataDevolucaoReal     DateTime? @map("data_devolucao_real")
+    status                String
+    observacoes           String?   @db.VarChar(500)
+    multa                 Float?    @default(0)
+    renovacoes            Int?      @default(0)
+
+    createdAt             DateTime  @default(now()) @map("created_at")
+    updatedAt             DateTime  @updatedAt @map("updated_at")
+
+    // Chave Estrangeira
+    livro                 Livro     @relation(fields: [livroId], references: [id])
+    
+    @@map("emprestimos")
+}
+
+// --- MODELO RESERVA (Definição que estava faltando/truncada) ---
+model Reserva {
+    id                    String    @id @default(uuid())
+    livroId               String    @map("livro_id")
+    usuarioNome           String    @db.VarChar(100) @map("usuario_nome")
+    usuarioEmail          String    @map("usuario_email")
+    usuarioTelefone       String?   @map("usuario_telefone")
+    dataReserva           DateTime  @map("data_reserva")
+    dataExpiracao         DateTime? @map("data_expiracao")
+    dataNotificacao       DateTime? @map("data_notificacao")
+    status                String
+    prioridade            Int?      @default(1)
+    observacoes           String?   @db.VarChar(300)
+
+    createdAt             DateTime  @default(now()) @map("created_at")
+    updatedAt             DateTime  @updatedAt @map("updated_at")
+
+    // Chave Estrangeira
+    livro                 Livro     @relation(fields: [livroId], references: [id])
+
+    @@map("reservas")
+}
+
+// --- MODELO CATEGORIA ---
+model Categoria {
+    id                    String    @id @default(uuid())
+    nome                  String    @db.VarChar(50)
+    codigo                String    @db.VarChar(10) @unique
+    descricao             String?   @db.VarChar(200)
+    cor                   String?   @db.VarChar(7)
+    ativa                 Boolean
+    ordem                 Int?      @default(1)
+    totalLivros           Int?      @default(0) @map("total_livros")
+
+    createdAt             DateTime  @default(now()) @map("created_at")
+    updatedAt             DateTime  @updatedAt @map("updated_at")
+
+    @@map("categorias") 
+}
+
+// --- MODELO AUTOR ---
+model Autor {
+    id                    String    @id @default(uuid())
+    nome                  String    @db.VarChar(100)
+    nomeArtistico         String?   @db.VarChar(100) @map("nome_artistico")
+    biografia             String?   @db.VarChar(1000)
+    dataNascimento        DateTime? @map("data_nascimento")
+    dataFalecimento       DateTime? @map("data_falecimento")
+    nacionalidade         String?   @db.VarChar(50)
+    generosLiterarios     String[]  // Array de Strings no PostgreSQL
+    fotoUrl               String?   @map("foto_url")
+    siteOficial           String?   @map("site_oficial")
+    ativo                 Boolean
+    totalLivros           Int?      @default(0) @map("total_livros")
+    
+    createdAt             DateTime  @default(now()) @map("created_at")
+    updatedAt             DateTime  @updatedAt @map("updated_at")
+
+    @@map("autores") 
+}
