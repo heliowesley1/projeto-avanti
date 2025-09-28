@@ -1,8 +1,9 @@
-// src/lib/api.ts
+// src/lib/api.ts - API WRAPPER CORRETO PARA O FRONTEND (Usa Axios e Proxy)
 
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api'; 
+// URL base deve ser a URL relativa que o proxy do Vite irá interceptar
+const API_BASE_URL = '/api'; 
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,21 +12,30 @@ const api = axios.create({
   },
 });
 
-// Tipos baseados no seu modelo Prisma (use camelCase)
+// Interface Base para todas as entidades (mantida)
 interface BaseEntity {
-  _id: string;
+  _id: string; // Mapeado de 'id' do Prisma
   createdAt: string;
   updatedAt: string;
 }
 
+// Interfaces de Entidades (mantidas)
 export interface Livro extends BaseEntity {
   titulo: string;
   autor: string;
   isbn: string;
   categoria: string;
-  anoPublicacao: number;
-  // ... outras propriedades
+  ano_publicacao: number;
+  editora?: string;
+  paginas?: number;
+  sinopse?: string;
+  capa_url?: string;
+  disponivel: boolean;
+  quantidade_total?: number;
+  quantidade_disponivel?: number;
+  localizacao?: string;
 }
+// ... (outras interfaces Categoria, Emprestimo, Reserva, Autor)
 
 export interface Categoria extends BaseEntity {
   nome: string;
@@ -34,13 +44,59 @@ export interface Categoria extends BaseEntity {
   cor?: string;
   ativa: boolean;
   ordem?: number;
-  totalLivros?: number;
+  total_livros?: number;
 }
 
-// Helper para CRUD genérico
+export interface Emprestimo extends BaseEntity {
+  livro_id: string;
+  usuario_nome: string;
+  usuario_email: string;
+  usuario_telefone?: string;
+  data_emprestimo: string;
+  data_devolucao_prevista: string;
+  data_devolucao_real?: string;
+  status: 'ativo' | 'devolvido' | 'atrasado' | 'renovado';
+  observacoes?: string;
+  multa?: number;
+  renovacoes?: number;
+}
+
+export interface Reserva extends BaseEntity {
+  livro_id: string;
+  usuario_nome: string;
+  usuario_email: string;
+  usuario_telefone?: string;
+  data_reserva: string;
+  data_expiracao?: string;
+  data_notificacao?: string;
+  status: 'ativa' | 'notificada' | 'expirada' | 'cancelada' | 'atendida';
+  prioridade?: number;
+  observacoes?: string;
+}
+
+export interface Autor extends BaseEntity {
+    nome: string
+    nome_artistico?: string
+    biografia?: string
+    data_nascimento?: string
+    data_falecimento?: string
+    nacionalidade?: string
+    generos_literarios?: string[]
+    foto_url?: string
+    site_oficial?: string
+    ativo: boolean
+    total_livros?: number
+}
+
+
+// Helper para CRUD genérico (mantido)
 const createApi = <T extends BaseEntity>(path: string) => ({
-  list: async (): Promise<T[]> => {
-    const response = await api.get(path);
+  list: async (params?: any): Promise<T[]> => {
+    const response = await api.get(path, { params });
+    return response.data;
+  },
+  getById: async (id: string): Promise<T> => {
+    const response = await api.get(`${path}/${id}`);
     return response.data;
   },
   create: async (data: any): Promise<T> => {
@@ -58,5 +114,6 @@ const createApi = <T extends BaseEntity>(path: string) => ({
 
 export const livrosApi = createApi<Livro>('/livros');
 export const categoriasApi = createApi<Categoria>('/categorias');
-
-// ... crie as APIs para Autores, Emprestimos, Reservas aqui
+export const emprestimosApi = createApi<Emprestimo>('/emprestimos');
+export const reservasApi = createApi<Reserva>('/reservas');
+export const autoresApi = createApi<Autor>('/autores');

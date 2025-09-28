@@ -1,27 +1,13 @@
+// src/pages/Autores.tsx (Refatorado para usar a API local)
 
 import React, { useState, useEffect } from 'react'
 import {Users, Plus, Search, Edit, Trash2, Eye, X, Calendar, Globe, BookOpen} from 'lucide-react'
-import { lumi } from '../lib/lumi'
+import { autoresApi, Autor } from '../lib/api' // <--- USANDO A NOVA API LOCAL
 import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-interface Autor {
-  _id: string
-  nome: string
-  nome_artistico?: string
-  biografia?: string
-  data_nascimento?: string
-  data_falecimento?: string
-  nacionalidade?: string
-  generos_literarios?: string[]
-  foto_url?: string
-  site_oficial?: string
-  ativo: boolean
-  total_livros?: number
-  createdAt: string
-  updatedAt: string
-}
+// A interface Autor é importada de '../lib/api'
 
 const Autores: React.FC = () => {
   const [autores, setAutores] = useState<Autor[]>([])
@@ -44,10 +30,9 @@ const Autores: React.FC = () => {
   const fetchAutores = async () => {
     try {
       setLoading(true)
-      const response = await lumi.entities.autores.list({
-        sort: { nome: 1 }
-      })
-      setAutores(response.list || [])
+      // Chamada para a API local (substituindo lumi.entities.autores.list)
+      const response = await autoresApi.list() 
+      setAutores(response || []) // A API local retorna diretamente o array
     } catch (error) {
       console.error('Erro ao carregar autores:', error)
       toast.error('Erro ao carregar autores')
@@ -65,7 +50,7 @@ const Autores: React.FC = () => {
       formData.get(`genero_${genero}`) === 'on'
     )
     
-    const autorData = {
+    const autorData: Partial<Autor> = {
       nome: formData.get('nome') as string,
       nome_artistico: formData.get('nome_artistico') as string,
       biografia: formData.get('biografia') as string,
@@ -79,20 +64,19 @@ const Autores: React.FC = () => {
       site_oficial: formData.get('site_oficial') as string,
       ativo: formData.get('ativo') === 'true',
       total_livros: parseInt(formData.get('total_livros') as string) || 0,
-      creator: 'admin',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      // creator e datas são manipulados no backend
     }
 
     try {
       if (editingAutor) {
-        await lumi.entities.autores.update(editingAutor._id, {
-          ...autorData,
-          updatedAt: new Date().toISOString()
+        // Chamada para a API local (substituindo lumi.entities.autores.update)
+        await autoresApi.update(editingAutor._id, {
+          ...autorData
         })
         toast.success('Autor atualizado com sucesso!')
       } else {
-        await lumi.entities.autores.create(autorData)
+        // Chamada para a API local (substituindo lumi.entities.autores.create)
+        await autoresApi.create(autorData)
         toast.success('Autor criado com sucesso!')
       }
       
@@ -108,7 +92,8 @@ const Autores: React.FC = () => {
   const handleDelete = async (id: string, nome: string) => {
     if (confirm(`Tem certeza que deseja excluir o autor "${nome}"?`)) {
       try {
-        await lumi.entities.autores.delete(id)
+        // Chamada para a API local (substituindo lumi.entities.autores.delete)
+        await autoresApi.delete(id)
         toast.success('Autor excluído com sucesso!')
         fetchAutores()
       } catch (error) {
@@ -120,9 +105,9 @@ const Autores: React.FC = () => {
 
   const toggleStatus = async (autor: Autor) => {
     try {
-      await lumi.entities.autores.update(autor._id, {
-        ativo: !autor.ativo,
-        updatedAt: new Date().toISOString()
+      // Chamada para a API local (substituindo lumi.entities.autores.update)
+      await autoresApi.update(autor._id, {
+        ativo: !autor.ativo
       })
       toast.success(`Autor ${!autor.ativo ? 'ativado' : 'desativado'} com sucesso!`)
       fetchAutores()

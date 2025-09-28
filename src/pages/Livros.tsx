@@ -1,27 +1,11 @@
+// src/pages/Livros.tsx (CORRIGIDO)
 
 import React, { useState, useEffect } from 'react'
 import {BookOpen, Plus, Search, Filter, Edit, Trash2, Eye, X} from 'lucide-react'
-import { lumi } from '../lib/lumi'
+import { livrosApi, Livro } from '../lib/api' // <--- IMPORT CORRIGIDO
 import toast from 'react-hot-toast'
 
-interface Livro {
-  _id: string
-  titulo: string
-  autor: string
-  isbn: string
-  categoria: string
-  ano_publicacao: number
-  editora?: string
-  paginas?: number
-  sinopse?: string
-  capa_url?: string
-  disponivel: boolean
-  quantidade_total?: number
-  quantidade_disponivel?: number
-  localizacao?: string
-  createdAt: string
-  updatedAt: string
-}
+// A interface Livro é importada de '../lib/api'
 
 const Livros: React.FC = () => {
   const [livros, setLivros] = useState<Livro[]>([])
@@ -44,12 +28,12 @@ const Livros: React.FC = () => {
   const fetchLivros = async () => {
     try {
       setLoading(true)
-      const response = await lumi.entities.livros.list({
-        sort: { createdAt: -1 }
-      })
-      setLivros(response.list || [])
+      // Chamada para a API local
+      const response = await livrosApi.list()
+      setLivros(response || []) // A API local retorna diretamente o array
     } catch (error) {
       console.error('Erro ao carregar livros:', error)
+      // O erro de API 500 no console será mapeado para este toast
       toast.error('Erro ao carregar livros')
     } finally {
       setLoading(false)
@@ -60,7 +44,8 @@ const Livros: React.FC = () => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     
-    const livroData = {
+    // Os campos são passados em snake_case para o backend
+    const livroData: Partial<Livro> = {
       titulo: formData.get('titulo') as string,
       autor: formData.get('autor') as string,
       isbn: formData.get('isbn') as string,
@@ -74,20 +59,17 @@ const Livros: React.FC = () => {
       quantidade_total: parseInt(formData.get('quantidade_total') as string) || 1,
       quantidade_disponivel: parseInt(formData.get('quantidade_disponivel') as string) || 1,
       localizacao: formData.get('localizacao') as string,
-      creator: 'admin',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      // creator e datas são manipulados no backend
     }
 
     try {
       if (editingLivro) {
-        await lumi.entities.livros.update(editingLivro._id, {
-          ...livroData,
-          updatedAt: new Date().toISOString()
+        await livrosApi.update(editingLivro._id, {
+          ...livroData
         })
         toast.success('Livro atualizado com sucesso!')
       } else {
-        await lumi.entities.livros.create(livroData)
+        await livrosApi.create(livroData)
         toast.success('Livro criado com sucesso!')
       }
       
@@ -103,7 +85,7 @@ const Livros: React.FC = () => {
   const handleDelete = async (id: string, titulo: string) => {
     if (confirm(`Tem certeza que deseja excluir o livro "${titulo}"?`)) {
       try {
-        await lumi.entities.livros.delete(id)
+        await livrosApi.delete(id)
         toast.success('Livro excluído com sucesso!')
         fetchLivros()
       } catch (error) {

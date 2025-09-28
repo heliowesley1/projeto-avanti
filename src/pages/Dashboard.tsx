@@ -1,7 +1,10 @@
+// src/pages/Dashboard.tsx (CORREÇÃO FINAL DE CARREGAMENTO DE DADOS)
 
 import React, { useState, useEffect } from 'react'
 import {BookOpen, Users, Calendar, Bookmark, TrendingUp, AlertTriangle, CheckCircle, Clock} from 'lucide-react'
-import { lumi } from '../lib/lumi'
+// Importa todos os tipos e APIs do wrapper local
+import { livrosApi, emprestimosApi, reservasApi, categoriasApi, autoresApi, 
+         Livro, Emprestimo, Reserva, Categoria, Autor } from '../lib/api'
 
 interface DashboardStats {
   totalLivros: number
@@ -10,6 +13,7 @@ interface DashboardStats {
   emprestimosAtrasados: number
   reservasAtivas: number
   totalCategorias: number
+  totalAutores: number // Adicionando total de autores para uso futuro
 }
 
 const Dashboard: React.FC = () => {
@@ -19,7 +23,8 @@ const Dashboard: React.FC = () => {
     emprestimosAtivos: 0,
     emprestimosAtrasados: 0,
     reservasAtivas: 0,
-    totalCategorias: 0
+    totalCategorias: 0,
+    totalAutores: 0
   })
   const [loading, setLoading] = useState(true)
   const [recentActivity, setRecentActivity] = useState<any[]>([])
@@ -29,23 +34,26 @@ const Dashboard: React.FC = () => {
       try {
         setLoading(true)
         
-        // Buscar dados das diferentes entidades
-        const [livrosRes, emprestimosRes, reservasRes, categoriasRes] = await Promise.all([
-          lumi.entities.livros.list(),
-          lumi.entities.emprestimos.list(),
-          lumi.entities.reservas.list(),
-          lumi.entities.categorias.list()
-        ])
+        // --- FUNÇÃO DE CARREGAMENTO ROBUSTA ---
+        const [livros, emprestimos, reservas, categorias, autores] = await Promise.all([
+          livrosApi.list().catch(() => []), // Retorna array vazio em caso de falha para não quebrar o Promise.all
+          emprestimosApi.list().catch(() => []),
+          reservasApi.list().catch(() => []),
+          categoriasApi.list().catch(() => []),
+          autoresApi.list().catch(() => [])
+        ]) as [Livro[], Emprestimo[], Reserva[], Categoria[], Autor[]];
+        // ------------------------------------
 
-        const livros = livrosRes.list || []
-        const emprestimos = emprestimosRes.list || []
-        const reservas = reservasRes.list || []
-        const categorias = categoriasRes.list || []
-
-        // Calcular estatísticas
+        // Cálculo das estatísticas
         const livrosDisponiveis = livros.filter(livro => livro.disponivel).length
         const emprestimosAtivos = emprestimos.filter(emp => emp.status === 'ativo' || emp.status === 'renovado').length
-        const emprestimosAtrasados = emprestimos.filter(emp => emp.status === 'atrasado').length
+        
+        // Atrasado = status != 'devolvido' e data de devolução prevista é passada
+        const emprestimosAtrasados = emprestimos.filter(emp => {
+          // O tipo Date() pode aceitar a string, mas a verificação de null deve ser feita
+          return (emp.status === 'ativo' || emp.status === 'renovado') && new Date(emp.data_devolucao_prevista) < new Date()
+        }).length
+        
         const reservasAtivas = reservas.filter(res => res.status === 'ativa').length
 
         setStats({
@@ -54,10 +62,11 @@ const Dashboard: React.FC = () => {
           emprestimosAtivos,
           emprestimosAtrasados,
           reservasAtivas,
-          totalCategorias: categorias.length
+          totalCategorias: categorias.length,
+          totalAutores: autores.length
         })
 
-        // Atividade recente (últimos empréstimos e reservas)
+        // Atividade recente
         const recentEmprestimos = emprestimos
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 3)
@@ -65,7 +74,7 @@ const Dashboard: React.FC = () => {
             type: 'emprestimo',
             description: `Empréstimo para ${emp.usuario_nome}`,
             time: emp.createdAt,
-            status: emp.status
+            status: (emp.status === 'ativo' || emp.status === 'renovado') && new Date(emp.data_devolucao_prevista) < new Date() ? 'atrasado' : emp.status
           }))
 
         const recentReservas = reservas
@@ -158,12 +167,17 @@ const Dashboard: React.FC = () => {
     switch (status) {
       case 'ativo':
       case 'ativa':
+      case 'atendida':
         return 'text-green-600 bg-green-100'
       case 'atrasado':
         return 'text-red-600 bg-red-100'
+      case 'notificada':
+      case 'renovado':
+        return 'text-yellow-600 bg-yellow-100'
       case 'devolvido':
-      case 'atendida':
-        return 'text-blue-600 bg-blue-100'
+      case 'expirada':
+      case 'cancelada':
+        return 'text-gray-600 bg-gray-100'
       default:
         return 'text-gray-600 bg-gray-100'
     }

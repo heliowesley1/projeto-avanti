@@ -1,37 +1,17 @@
+// src/pages/Emprestimos.tsx (Refatorado para usar a API local)
 
 import React, { useState, useEffect } from 'react'
 import {Calendar, Plus, Search, Filter, Edit, Trash2, Clock, CheckCircle, AlertTriangle, X, RefreshCw} from 'lucide-react'
-import { lumi } from '../lib/lumi'
+import { emprestimosApi, livrosApi, Emprestimo, Livro } from '../lib/api' // <--- USANDO AS NOVAS APIs LOCAIS
 import toast from 'react-hot-toast'
 import { format, addDays, isPast, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-interface Emprestimo {
-  _id: string
-  livro_id: string
-  usuario_nome: string
-  usuario_email: string
-  usuario_telefone?: string
-  data_emprestimo: string
-  data_devolucao_prevista: string
-  data_devolucao_real?: string
-  status: 'ativo' | 'devolvido' | 'atrasado' | 'renovado'
-  observacoes?: string
-  multa?: number
-  renovacoes?: number
-  createdAt: string
-  updatedAt: string
-}
-
-interface Livro {
-  _id: string
-  titulo: string
-  autor: string
-}
+// As interfaces Emprestimo e Livro são importadas de '../lib/api'
 
 const Emprestimos: React.FC = () => {
   const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([])
-  const [livros, setLivros] = useState<Livro[]>([])
+  const [livros, setLivros] = useState<Livro[]>([]) 
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
@@ -52,13 +32,14 @@ const Emprestimos: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true)
+      // Chamadas para as APIs locais (substituindo lumi.entities)
       const [emprestimosRes, livrosRes] = await Promise.all([
-        lumi.entities.emprestimos.list({ sort: { createdAt: -1 } }),
-        lumi.entities.livros.list()
+        emprestimosApi.list(),
+        livrosApi.list()
       ])
       
-      setEmprestimos(emprestimosRes.list || [])
-      setLivros(livrosRes.list || [])
+      setEmprestimos(emprestimosRes || [])
+      setLivros(livrosRes || [])
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
       toast.error('Erro ao carregar dados')
@@ -86,40 +67,40 @@ const Emprestimos: React.FC = () => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     
+    // Os campos são enviados em snake_case para o backend
     const dataEmprestimo = new Date(formData.get('data_emprestimo') as string)
     const dataDevolucaoPrevista = addDays(dataEmprestimo, 14) // 14 dias de prazo padrão
     
-    const emprestimoData = {
+    const emprestimoData: Partial<Emprestimo> = {
       livro_id: formData.get('livro_id') as string,
       usuario_nome: formData.get('usuario_nome') as string,
       usuario_email: formData.get('usuario_email') as string,
       usuario_telefone: formData.get('usuario_telefone') as string,
       data_emprestimo: dataEmprestimo.toISOString(),
       data_devolucao_prevista: dataDevolucaoPrevista.toISOString(),
-      status: formData.get('status') as string || 'ativo',
+      status: formData.get('status') as Emprestimo['status'] || 'ativo',
       observacoes: formData.get('observacoes') as string,
       multa: parseFloat(formData.get('multa') as string) || 0,
       renovacoes: parseInt(formData.get('renovacoes') as string) || 0,
-      creator: 'bibliotecario',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      // creator e datas são manipulados no backend
     }
 
-    // Se for devolução, adicionar data de devolução real
+    // Se for devolução, adicionar data de devolução real e calcular multa
     if (emprestimoData.status === 'devolvido') {
       emprestimoData.data_devolucao_real = new Date().toISOString()
-      emprestimoData.multa = calcularMulta(emprestimoData.data_devolucao_prevista, emprestimoData.data_devolucao_real)
+      emprestimoData.multa = calcularMulta(emprestimoData.data_devolucao_prevista!, emprestimoData.data_devolucao_real)
     }
 
     try {
       if (editingEmprestimo) {
-        await lumi.entities.emprestimos.update(editingEmprestimo._id, {
-          ...emprestimoData,
-          updatedAt: new Date().toISOString()
+        // Chamada para a API local (substituindo lumi.entities.emprestimos.update)
+        await emprestimosApi.update(editingEmprestimo._id, {
+          ...emprestimoData
         })
         toast.success('Empréstimo atualizado com sucesso!')
       } else {
-        await lumi.entities.emprestimos.create(emprestimoData)
+        // Chamada para a API local (substituindo lumi.entities.emprestimos.create)
+        await emprestimosApi.create(emprestimoData)
         toast.success('Empréstimo criado com sucesso!')
       }
       
@@ -135,7 +116,8 @@ const Emprestimos: React.FC = () => {
   const handleDelete = async (id: string, usuarioNome: string) => {
     if (confirm(`Tem certeza que deseja excluir o empréstimo de "${usuarioNome}"?`)) {
       try {
-        await lumi.entities.emprestimos.delete(id)
+        // Chamada para a API local (substituindo lumi.entities.emprestimos.delete)
+        await emprestimosApi.delete(id)
         toast.success('Empréstimo excluído com sucesso!')
         fetchData()
       } catch (error) {
@@ -146,7 +128,7 @@ const Emprestimos: React.FC = () => {
   }
 
   const handleRenovar = async (emprestimo: Emprestimo) => {
-    if (emprestimo.renovacoes >= 3) {
+    if ((emprestimo.renovacoes || 0) >= 3) {
       toast.error('Limite de renovações atingido (máximo 3)')
       return
     }
@@ -154,11 +136,10 @@ const Emprestimos: React.FC = () => {
     try {
       const novaDataVencimento = addDays(new Date(emprestimo.data_devolucao_prevista), 14)
       
-      await lumi.entities.emprestimos.update(emprestimo._id, {
+      await emprestimosApi.update(emprestimo._id, {
         data_devolucao_prevista: novaDataVencimento.toISOString(),
         status: 'renovado',
-        renovacoes: (emprestimo.renovacoes || 0) + 1,
-        updatedAt: new Date().toISOString()
+        renovacoes: (emprestimo.renovacoes || 0) + 1
       })
       
       toast.success('Empréstimo renovado com sucesso!')
@@ -174,11 +155,10 @@ const Emprestimos: React.FC = () => {
       const dataDevolucao = new Date().toISOString()
       const multa = calcularMulta(emprestimo.data_devolucao_prevista, dataDevolucao)
       
-      await lumi.entities.emprestimos.update(emprestimo._id, {
+      await emprestimosApi.update(emprestimo._id, {
         status: 'devolvido',
         data_devolucao_real: dataDevolucao,
-        multa: multa,
-        updatedAt: new Date().toISOString()
+        multa: multa
       })
       
       if (multa > 0) {
@@ -207,6 +187,7 @@ const Emprestimos: React.FC = () => {
   }
 
   const isAtrasado = (dataVencimento: string, status: string) => {
+    // Verifica se o empréstimo não foi devolvido e se a data de vencimento é passada
     return status !== 'devolvido' && isPast(new Date(dataVencimento))
   }
 
@@ -338,7 +319,7 @@ const Emprestimos: React.FC = () => {
                     )}
                   </div>
 
-                  {emprestimo.multa > 0 && (
+                  {emprestimo.multa && emprestimo.multa > 0 && (
                     <p className="text-sm text-red-600 font-medium">
                       Multa: R$ {emprestimo.multa.toFixed(2)}
                     </p>
@@ -355,7 +336,7 @@ const Emprestimos: React.FC = () => {
                           Devolver
                         </button>
                         
-                        {emprestimo.renovacoes < 3 && (
+                        {emprestimo.renovacoes && emprestimo.renovacoes < 3 && (
                           <button
                             onClick={() => handleRenovar(emprestimo)}
                             className="bg-yellow-50 text-yellow-600 px-3 py-1 rounded text-sm hover:bg-yellow-100 transition-colors flex items-center"
@@ -433,6 +414,7 @@ const Emprestimos: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Selecione um livro</option>
+                      {/* Filtra apenas livros disponíveis no formulário de novo empréstimo */}
                       {livros.filter(livro => livro.disponivel).map(livro => (
                         <option key={livro._id} value={livro._id}>
                           {livro.titulo} - {livro.autor}

@@ -1,37 +1,15 @@
+// src/pages/Reservas.tsx (CÓDIGO FINAL E ESTÁVEL)
 
 import React, { useState, useEffect } from 'react'
 import {Bookmark, Plus, Search, Filter, Edit, Trash2, Clock, Bell, CheckCircle, XCircle, X, Users} from 'lucide-react'
-import { lumi } from '../lib/lumi'
+import { reservasApi, livrosApi, Reserva, Livro } from '../lib/api' // Importa as APIs e tipos
 import toast from 'react-hot-toast'
 import { format, addDays, isPast } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-interface Reserva {
-  _id: string
-  livro_id: string
-  usuario_nome: string
-  usuario_email: string
-  usuario_telefone?: string
-  data_reserva: string
-  data_expiracao?: string
-  data_notificacao?: string
-  status: 'ativa' | 'notificada' | 'expirada' | 'cancelada' | 'atendida'
-  prioridade?: number
-  observacoes?: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface Livro {
-  _id: string
-  titulo: string
-  autor: string
-  disponivel: boolean
-}
-
 const Reservas: React.FC = () => {
   const [reservas, setReservas] = useState<Reserva[]>([])
-  const [livros, setLivros] = useState<Livro[]>([])
+  const [livros, setLivros] = useState<Livro[]>([]) 
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
@@ -53,16 +31,18 @@ const Reservas: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true)
+      // Chamadas robustas: se alguma falhar, retorna array vazio e não quebra o Promise.all
       const [reservasRes, livrosRes] = await Promise.all([
-        lumi.entities.reservas.list({ sort: { prioridade: 1, createdAt: 1 } }),
-        lumi.entities.livros.list()
+        reservasApi.list().catch(() => []),
+        livrosApi.list().catch(() => [])
       ])
       
-      setReservas(reservasRes.list || [])
-      setLivros(livrosRes.list || [])
+      setReservas(reservasRes || [])
+      setLivros(livrosRes || [])
+      
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
-      toast.error('Erro ao carregar dados')
+      toast.error('Erro ao carregar dados') 
     } finally {
       setLoading(false)
     }
@@ -70,7 +50,7 @@ const Reservas: React.FC = () => {
 
   const getLivroInfo = (livroId: string) => {
     const livro = livros.find(l => l._id === livroId)
-    return livro || { titulo: 'Livro não encontrado', autor: '', disponivel: false }
+    return livro || { titulo: 'Livro não encontrado', autor: '', disponivel: false, _id: livroId } // Garante que o objeto retornado tenha _id
   }
 
   const getProximaPrioridade = (livroId: string) => {
@@ -84,32 +64,28 @@ const Reservas: React.FC = () => {
     
     const livroId = formData.get('livro_id') as string
     const dataReserva = new Date(formData.get('data_reserva') as string)
-    const dataExpiracao = addDays(dataReserva, 7) // 7 dias para retirar após notificação
+    const dataExpiracao = addDays(dataReserva, 7)
     
-    const reservaData = {
+    const reservaData: Partial<Reserva> = {
       livro_id: livroId,
       usuario_nome: formData.get('usuario_nome') as string,
       usuario_email: formData.get('usuario_email') as string,
       usuario_telefone: formData.get('usuario_telefone') as string,
       data_reserva: dataReserva.toISOString(),
       data_expiracao: dataExpiracao.toISOString(),
-      status: formData.get('status') as string || 'ativa',
+      status: formData.get('status') as Reserva['status'] || 'ativa',
       prioridade: parseInt(formData.get('prioridade') as string) || getProximaPrioridade(livroId),
       observacoes: formData.get('observacoes') as string,
-      creator: 'bibliotecario',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
     }
 
     try {
       if (editingReserva) {
-        await lumi.entities.reservas.update(editingReserva._id, {
-          ...reservaData,
-          updatedAt: new Date().toISOString()
+        await reservasApi.update(editingReserva._id, {
+          ...reservaData
         })
         toast.success('Reserva atualizada com sucesso!')
       } else {
-        await lumi.entities.reservas.create(reservaData)
+        await reservasApi.create(reservaData)
         toast.success('Reserva criada com sucesso!')
       }
       
@@ -125,7 +101,7 @@ const Reservas: React.FC = () => {
   const handleDelete = async (id: string, usuarioNome: string) => {
     if (confirm(`Tem certeza que deseja excluir a reserva de "${usuarioNome}"?`)) {
       try {
-        await lumi.entities.reservas.delete(id)
+        await reservasApi.delete(id)
         toast.success('Reserva excluída com sucesso!')
         fetchData()
       } catch (error) {
@@ -137,10 +113,9 @@ const Reservas: React.FC = () => {
 
   const handleNotificar = async (reserva: Reserva) => {
     try {
-      await lumi.entities.reservas.update(reserva._id, {
+      await reservasApi.update(reserva._id, {
         status: 'notificada',
-        data_notificacao: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        data_notificacao: new Date().toISOString()
       })
       
       toast.success(`${reserva.usuario_nome} foi notificado sobre a disponibilidade!`)
@@ -153,9 +128,8 @@ const Reservas: React.FC = () => {
 
   const handleAtender = async (reserva: Reserva) => {
     try {
-      await lumi.entities.reservas.update(reserva._id, {
-        status: 'atendida',
-        updatedAt: new Date().toISOString()
+      await reservasApi.update(reserva._id, {
+        status: 'atendida'
       })
       
       toast.success('Reserva atendida com sucesso!')
@@ -169,9 +143,8 @@ const Reservas: React.FC = () => {
   const handleCancelar = async (reserva: Reserva) => {
     if (confirm(`Tem certeza que deseja cancelar a reserva de "${reserva.usuario_nome}"?`)) {
       try {
-        await lumi.entities.reservas.update(reserva._id, {
-          status: 'cancelada',
-          updatedAt: new Date().toISOString()
+        await reservasApi.update(reserva._id, {
+          status: 'cancelada'
         })
         
         toast.success('Reserva cancelada com sucesso!')
@@ -200,12 +173,15 @@ const Reservas: React.FC = () => {
     return dataExpiracao && status !== 'atendida' && status !== 'cancelada' && isPast(new Date(dataExpiracao))
   }
 
-  // Agrupar reservas por livro para mostrar fila
   const reservasPorLivro = filteredReservas.reduce((acc, reserva) => {
-    if (!acc[reserva.livro_id]) {
-      acc[reserva.livro_id] = []
+    // CORREÇÃO: Garante que o agrupamento não falhe se o ID do livro for inválido
+    const livroId = reserva.livro_id;
+    if (livroId) {
+        if (!acc[livroId]) {
+            acc[livroId] = []
+        }
+        acc[livroId].push(reserva)
     }
-    acc[reserva.livro_id].push(reserva)
     return acc
   }, {} as Record<string, Reserva[]>)
 
@@ -273,6 +249,7 @@ const Reservas: React.FC = () => {
 
       {/* Reservas por Livro */}
       <div className="space-y-6">
+        {/* Renderiza a lista de reservas (se houver) */}
         {Object.entries(reservasPorLivro).map(([livroId, reservasDoLivro]) => {
           const livroInfo = getLivroInfo(livroId)
           const reservasAtivas = reservasDoLivro.filter(r => r.status === 'ativa' || r.status === 'notificada')
@@ -412,7 +389,8 @@ const Reservas: React.FC = () => {
         })}
       </div>
 
-      {filteredReservas.length === 0 && (
+      {/* Renderiza a mensagem de "Nenhuma reserva encontrada" apenas se a lista filtrada estiver vazia */}
+      {Object.keys(reservasPorLivro).length === 0 && !loading && (
         <div className="text-center py-12">
           <Bookmark className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <p className="text-gray-500 text-lg">Nenhuma reserva encontrada</p>

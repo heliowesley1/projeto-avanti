@@ -41,6 +41,18 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       exclude: ['lucide-react'],
     },
+    // --- CORREÇÃO DO CORS: CONFIGURAÇÃO DE PROXY ---
+    server: { 
+      proxy: {
+        // Redireciona qualquer requisição que comece com /api para o backend
+        '/api': {
+          target: 'http://localhost:3000',
+          changeOrigin: true, // Necessário para evitar problemas de CORS
+          // O reescreve faz com que '/api/livros' se torne 'http://localhost:3000/api/livros'
+          rewrite: (path) => path.replace(/^\/api/, '/api'), 
+        }
+      }
+    }
+    // ------------------------------------------------
   }
 })
-
