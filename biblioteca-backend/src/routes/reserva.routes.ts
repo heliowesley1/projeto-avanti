@@ -1,12 +1,9 @@
-// biblioteca-backend/src/routes/reserva.routes.ts (CÓDIGO FINAL E ESTÁVEL)
-
 import { Router } from 'express';
 import type { Reserva as ReservaPrisma } from '@prisma/client';
 import prisma from '../prisma';
 
 const reservaRouter = Router();
 
-// FUNÇÃO DE MAPEAR PARA PRISMA (CORREÇÃO DE ESCOPO)
 const mapFrontendToPrisma = (data: any) => {
     const dataToPrisma: any = {};
     
@@ -26,8 +23,6 @@ const mapFrontendToPrisma = (data: any) => {
     return dataToPrisma;
 }
 
-
-// FUNÇÃO DE MAPEAR PARA FRONTEND (COM TRATAMENTO DE NULL)
 const mapReservaToFrontend = (reserva: ReservaPrisma) => ({
     _id: reserva.id,
     livro_id: reserva.livroId,
@@ -44,11 +39,9 @@ const mapReservaToFrontend = (reserva: ReservaPrisma) => ({
     updatedAt: reserva.updatedAt.toISOString(),
 });
 
-// [GET] /api/reservas: Listar todos (COM ORDENAÇÃO SIMPLIFICADA)
 reservaRouter.get('/', async (req, res) => {
     try {
         const reservas = await prisma.reserva.findMany({ 
-            // CORREÇÃO FINAL: Usa apenas 'createdAt' para evitar crash com nulls em 'prioridade'
             orderBy: { createdAt: 'asc' } 
         });
         return res.json(reservas.map(mapReservaToFrontend));
@@ -58,7 +51,6 @@ reservaRouter.get('/', async (req, res) => {
     }
 });
 
-// [POST] /api/reservas: Criar nova
 reservaRouter.post('/', async (req, res) => {
     try {
         const dataToPrisma = mapFrontendToPrisma(req.body); 
@@ -72,7 +64,6 @@ reservaRouter.post('/', async (req, res) => {
     }
 });
 
-// [PUT] /api/reservas/:id: Atualizar
 reservaRouter.put('/:id', async (req, res) => {
     try {
         const dataToUpdate = mapFrontendToPrisma(req.body); 
@@ -90,7 +81,6 @@ reservaRouter.put('/:id', async (req, res) => {
     }
 });
 
-// [DELETE] /api/reservas/:id: Deletar
 reservaRouter.delete('/:id', async (req, res) => {
     try {
         await prisma.reserva.delete({ where: { id: req.params.id } });

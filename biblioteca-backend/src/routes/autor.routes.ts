@@ -1,12 +1,9 @@
-// biblioteca-backend/src/routes/autor.routes.ts (CORREÇÃO DE ESCOPO/CAPITALIZAÇÃO)
-
 import { Router } from 'express';
 import type { Autor as AutorPrisma } from '@prisma/client';
 import prisma from '../prisma';
 
 const autorRouter = Router();
 
-// FUNÇÃO DE MAPEAR PARA PRISMA (CORREÇÃO: Movida para o escopo superior)
 const mapFrontendToPrisma = (data: any) => {
     const dataToPrisma: any = {};
     
@@ -27,8 +24,6 @@ const mapFrontendToPrisma = (data: any) => {
     return dataToPrisma;
 }
 
-
-// Função de utilidade para mapear 'id' para '_id' e converter para snake_case
 const mapAutorToFrontend = (autor: AutorPrisma) => ({
     _id: autor.id,
     nome: autor.nome,
@@ -46,7 +41,6 @@ const mapAutorToFrontend = (autor: AutorPrisma) => ({
     updatedAt: autor.updatedAt.toISOString(),
 });
 
-// [GET] /api/autores: Listar todos
 autorRouter.get('/', async (req, res) => {
     try {
         const autores = await prisma.autor.findMany({ 
@@ -59,7 +53,6 @@ autorRouter.get('/', async (req, res) => {
     }
 });
 
-// [POST] /api/autores: Criar novo
 autorRouter.post('/', async (req, res) => {
     try {
         const dataToPrisma = mapFrontendToPrisma(req.body); 
@@ -73,7 +66,6 @@ autorRouter.post('/', async (req, res) => {
     }
 });
 
-// [PUT] /api/autores/:id: Atualizar
 autorRouter.put('/:id', async (req, res) => {
     try {
         const dataToUpdate = mapFrontendToPrisma(req.body);
@@ -91,7 +83,6 @@ autorRouter.put('/:id', async (req, res) => {
     }
 });
 
-// [DELETE] /api/autores/:id: Deletar
 autorRouter.delete('/:id', async (req, res) => {
     try {
         await prisma.autor.delete({ where: { id: req.params.id } });

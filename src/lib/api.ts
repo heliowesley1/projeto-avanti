@@ -1,8 +1,5 @@
-// src/lib/api.ts - API WRAPPER CORRETO PARA O FRONTEND (Usa Axios e Proxy)
-
 import axios from 'axios';
 
-// URL base deve ser a URL relativa que o proxy do Vite irá interceptar
 const API_BASE_URL = '/api'; 
 
 const api = axios.create({
@@ -12,14 +9,13 @@ const api = axios.create({
   },
 });
 
-// Interface Base para todas as entidades (mantida)
 interface BaseEntity {
-  _id: string; // Mapeado de 'id' do Prisma
+  _id: string; 
   createdAt: string;
   updatedAt: string;
 }
 
-// Interfaces de Entidades (mantidas)
+
 export interface Livro extends BaseEntity {
   titulo: string;
   autor: string;
@@ -35,7 +31,6 @@ export interface Livro extends BaseEntity {
   quantidade_disponivel?: number;
   localizacao?: string;
 }
-// ... (outras interfaces Categoria, Emprestimo, Reserva, Autor)
 
 export interface Categoria extends BaseEntity {
   nome: string;
@@ -88,8 +83,6 @@ export interface Autor extends BaseEntity {
     total_livros?: number
 }
 
-
-// Helper para CRUD genérico (mantido)
 const createApi = <T extends BaseEntity>(path: string) => ({
   list: async (params?: any): Promise<T[]> => {
     const response = await api.get(path, { params });

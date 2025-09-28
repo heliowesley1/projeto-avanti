@@ -1,30 +1,26 @@
-// biblioteca-backend/src/routes/emprestimo.routes.ts (CORRIGIDO FINAL)
-
 import { Router } from 'express';
 import type { Emprestimo as EmprestimoPrisma } from '@prisma/client';
 import prisma from '../prisma';
 
 const emprestimoRouter = Router();
 
-// Função de utilidade para mapear 'id' para '_id' e converter para snake_case
 const mapEmprestimoToFrontend = (emprestimo: EmprestimoPrisma) => ({
     _id: emprestimo.id,
     livro_id: emprestimo.livroId, 
     usuario_nome: emprestimo.usuarioNome,
     usuario_email: emprestimo.usuarioEmail,
-    usuario_telefone: emprestimo.usuarioTelefone ?? "", // Tratamento de null
+    usuario_telefone: emprestimo.usuarioTelefone ?? "", 
     data_emprestimo: emprestimo.dataEmprestimo.toISOString(), 
     data_devolucao_prevista: emprestimo.dataDevolucaoPrevista.toISOString(), 
     data_devolucao_real: emprestimo.dataDevolucaoReal?.toISOString(), 
     status: emprestimo.status,
-    observacoes: emprestimo.observacoes ?? "", // Tratamento de null
-    multa: emprestimo.multa ?? 0, // Tratamento de null
-    renovacoes: emprestimo.renovacoes ?? 0, // Tratamento de null
+    observacoes: emprestimo.observacoes ?? "", 
+    multa: emprestimo.multa ?? 0, 
+    renovacoes: emprestimo.renovacoes ?? 0, 
     createdAt: emprestimo.createdAt.toISOString(),
     updatedAt: emprestimo.updatedAt.toISOString(),
 });
 
-// Função para converter dados do frontend (snake_case) para o Prisma (camelCase)
 const mapFrontendToPrisma = (data: any) => {
     const dataToPrisma: any = {};
     
@@ -45,7 +41,6 @@ const mapFrontendToPrisma = (data: any) => {
     return dataToPrisma;
 }
 
-// [GET] /api/emprestimos: Listar todos
 emprestimoRouter.get('/', async (req, res) => {
     try {
         const emprestimos = await prisma.emprestimo.findMany({ 
@@ -58,12 +53,11 @@ emprestimoRouter.get('/', async (req, res) => {
     }
 });
 
-// [POST] /api/emprestimos: Criar novo
 emprestimoRouter.post('/', async (req, res) => {
     try {
         const dataToPrisma = mapFrontendToPrisma(req.body);
         
-        const novoRegistro = await prisma.emprestimo.create({ // Variável corrigida para evitar conflito
+        const novoRegistro = await prisma.emprestimo.create({ 
             data: dataToPrisma,
         });
         return res.status(201).json(mapEmprestimoToFrontend(novoRegistro));
@@ -72,7 +66,6 @@ emprestimoRouter.post('/', async (req, res) => {
     }
 });
 
-// [PUT] /api/emprestimos/:id: Atualizar
 emprestimoRouter.put('/:id', async (req, res) => {
     try {
         const dataToUpdate = mapFrontendToPrisma(req.body);
@@ -90,7 +83,6 @@ emprestimoRouter.put('/:id', async (req, res) => {
     }
 });
 
-// [DELETE] /api/emprestimos/:id: Deletar
 emprestimoRouter.delete('/:id', async (req, res) => {
     try {
         await prisma.emprestimo.delete({ where: { id: req.params.id } });

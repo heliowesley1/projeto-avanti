@@ -1,30 +1,24 @@
-// biblioteca-backend/src/routes/categoria.routes.ts (CÓDIGO FINAL E ESTÁVEL)
-
 import { Router } from 'express';
 import type { Categoria as CategoriaPrisma } from '@prisma/client';
 import prisma from '../prisma';
 
 const categoriaRouter = Router();
-
-// Função de utilidade para mapear 'id' para '_id' e converter para snake_case
 const mapCategoriaToFrontend = (categoria: CategoriaPrisma) => ({
     _id: categoria.id,
     nome: categoria.nome,
     codigo: categoria.codigo,
-    descricao: categoria.descricao ?? "", // Garante string vazia
-    cor: categoria.cor ?? "", // Garante string vazia
+    descricao: categoria.descricao ?? "",
+    cor: categoria.cor ?? "", 
     ativa: categoria.ativa,
-    ordem: categoria.ordem ?? 1, // Garante 1 (number)
-    total_livros: categoria.totalLivros ?? 0, // Garante 0 (number)
+    ordem: categoria.ordem ?? 1, 
+    total_livros: categoria.totalLivros ?? 0, 
     createdAt: categoria.createdAt.toISOString(),
     updatedAt: categoria.updatedAt.toISOString(),
 });
 
-// [GET] /api/categorias: Listar todos (COM ORDENAÇÃO SIMPLIFICADA)
 categoriaRouter.get('/', async (req, res) => {
     try {
         const categorias = await prisma.categoria.findMany({ 
-            // CORREÇÃO: Remove a ordenação problemática e usa apenas 'nome'
             orderBy: { nome: 'asc' } 
         });
         return res.json(categorias.map(mapCategoriaToFrontend));
@@ -34,7 +28,6 @@ categoriaRouter.get('/', async (req, res) => {
     }
 });
 
-// [POST] /api/categorias: Criar nova
 categoriaRouter.post('/', async (req, res) => {
     const { ordem, total_livros, ativa, descricao, cor, ...rest } = req.body;
     
@@ -43,7 +36,7 @@ categoriaRouter.post('/', async (req, res) => {
         ordem: ordem ? parseInt(ordem) : 1,
         totalLivros: total_livros ? parseInt(total_livros) : 0, 
         ativa: ativa === 'true' || ativa === true,
-        descricao: descricao || null, // Permite null no Prisma
+        descricao: descricao || null, 
         cor: cor || null,
     }
 
@@ -53,7 +46,6 @@ categoriaRouter.post('/', async (req, res) => {
         });
         return res.status(201).json(mapCategoriaToFrontend(novaCategoria));
     } catch (error) {
-        // Trata erro de código duplicado (P2002)
         if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === 'P2002') {
              return res.status(400).json({ error: 'Erro ao salvar: Código de categoria já em uso.' });
         }
@@ -62,7 +54,6 @@ categoriaRouter.post('/', async (req, res) => {
     }
 });
 
-// [PUT] /api/categorias/:id: Atualizar
 categoriaRouter.put('/:id', async (req, res) => {
     const { ordem, total_livros, ativa, descricao, cor, ...rest } = req.body;
     const data: any = { ...rest };
@@ -88,7 +79,6 @@ categoriaRouter.put('/:id', async (req, res) => {
     }
 });
 
-// [DELETE] /api/categorias/:id: Deletar
 categoriaRouter.delete('/:id', async (req, res) => {
     try {
         await prisma.categoria.delete({ where: { id: req.params.id } });

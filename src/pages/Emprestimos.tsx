@@ -1,13 +1,9 @@
-// src/pages/Emprestimos.tsx (Refatorado para usar a API local)
-
 import React, { useState, useEffect } from 'react'
 import {Calendar, Plus, Search, Filter, Edit, Trash2, CheckCircle, AlertTriangle, X, RefreshCw} from 'lucide-react'
-import { emprestimosApi, livrosApi, Emprestimo, Livro } from '../lib/api' // <--- USANDO AS NOVAS APIs LOCAIS
+import { emprestimosApi, livrosApi, Emprestimo, Livro } from '../lib/api' 
 import toast from 'react-hot-toast'
 import { format, addDays, isPast, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-
-// As interfaces Emprestimo e Livro são importadas de '../lib/api'
 
 const Emprestimos: React.FC = () => {
   const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([])
@@ -32,7 +28,6 @@ const Emprestimos: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true)
-      // Chamadas para as APIs locais (substituindo lumi.entities)
       const [emprestimosRes, livrosRes] = await Promise.all([
         emprestimosApi.list(),
         livrosApi.list()
@@ -60,16 +55,15 @@ const Emprestimos: React.FC = () => {
     if (devolucao <= vencimento) return 0
     
     const diasAtraso = differenceInDays(devolucao, vencimento)
-    return diasAtraso * 2.50 // R$ 2,50 por dia de atraso
+    return diasAtraso * 2.50
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     
-    // Os campos são enviados em snake_case para o backend
     const dataEmprestimo = new Date(formData.get('data_emprestimo') as string)
-    const dataDevolucaoPrevista = addDays(dataEmprestimo, 14) // 14 dias de prazo padrão
+    const dataDevolucaoPrevista = addDays(dataEmprestimo, 14)
     
     const emprestimoData: Partial<Emprestimo> = {
       livro_id: formData.get('livro_id') as string,
@@ -82,24 +76,20 @@ const Emprestimos: React.FC = () => {
       observacoes: formData.get('observacoes') as string,
       multa: parseFloat(formData.get('multa') as string) || 0,
       renovacoes: parseInt(formData.get('renovacoes') as string) || 0,
-      // creator e datas são manipulados no backend
     }
 
-    // Se for devolução, adicionar data de devolução real e calcular multa
     if (emprestimoData.status === 'devolvido') {
       emprestimoData.data_devolucao_real = new Date().toISOString()
-      emprestimoData.multa = calcularMulta(emprestimoData.data_devolucao_prevista!, emprestimoData.data_devolucao_real)
+      emprestimoData.multa = calcularMulta(editingEmprestimo?.data_devolucao_prevista || emprestimoData.data_devolucao_prevista!, emprestimoData.data_devolucao_real)
     }
 
     try {
       if (editingEmprestimo) {
-        // Chamada para a API local (substituindo lumi.entities.emprestimos.update)
         await emprestimosApi.update(editingEmprestimo._id, {
           ...emprestimoData
         })
         toast.success('Empréstimo atualizado com sucesso!')
       } else {
-        // Chamada para a API local (substituindo lumi.entities.emprestimos.create)
         await emprestimosApi.create(emprestimoData)
         toast.success('Empréstimo criado com sucesso!')
       }
@@ -116,7 +106,6 @@ const Emprestimos: React.FC = () => {
   const handleDelete = async (id: string, usuarioNome: string) => {
     if (confirm(`Tem certeza que deseja excluir o empréstimo de "${usuarioNome}"?`)) {
       try {
-        // Chamada para a API local (substituindo lumi.entities.emprestimos.delete)
         await emprestimosApi.delete(id)
         toast.success('Empréstimo excluído com sucesso!')
         fetchData()
@@ -128,7 +117,6 @@ const Emprestimos: React.FC = () => {
   }
 
   const handleRenovar = async (emprestimo: Emprestimo) => {
-    // CORREÇÃO: Trata renovacoes como opcional com valor padrão de 0
     if ((emprestimo.renovacoes || 0) >= 3) {
       toast.error('Limite de renovações atingido (máximo 3)')
       return
@@ -177,8 +165,8 @@ const Emprestimos: React.FC = () => {
 
   const filteredEmprestimos = emprestimos.filter(emprestimo => {
     const matchesSearch = emprestimo.usuario_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emprestimo.usuario_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         getLivroTitulo(emprestimo.livro_id).toLowerCase().includes(searchTerm.toLowerCase())
+                          emprestimo.usuario_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          getLivroTitulo(emprestimo.livro_id).toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = selectedStatus === '' || emprestimo.status === selectedStatus
     return matchesSearch && matchesStatus
   })
@@ -188,7 +176,6 @@ const Emprestimos: React.FC = () => {
   }
 
   const isAtrasado = (dataVencimento: string, status: string) => {
-    // Verifica se o empréstimo não foi devolvido e se a data de vencimento é passada
     return status !== 'devolvido' && isPast(new Date(dataVencimento))
   }
 
@@ -313,7 +300,6 @@ const Emprestimos: React.FC = () => {
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusInfo.color}`}>
                       {statusInfo.label}
                     </span>
-                    {/* CORREÇÃO: Usa (emprestimo.renovacoes || 0) para tratar 'undefined' */}
                     {(emprestimo.renovacoes || 0) > 0 && (
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                         {emprestimo.renovacoes} renovação(ões)
@@ -321,7 +307,7 @@ const Emprestimos: React.FC = () => {
                     )}
                   </div>
 
-                  {emprestimo.multa && emprestimo.multa > 0 && (
+                  {emprestimo.multa !== undefined && emprestimo.multa > 0 && (
                     <p className="text-sm text-red-600 font-medium">
                       Multa: R$ {emprestimo.multa.toFixed(2)}
                     </p>
@@ -338,7 +324,6 @@ const Emprestimos: React.FC = () => {
                           Devolver
                         </button>
                         
-                        {/* CORREÇÃO: Usa (emprestimo.renovacoes || 0) para verificação */}
                         {(emprestimo.renovacoes || 0) < 3 && (
                           <button
                             onClick={() => handleRenovar(emprestimo)}
@@ -417,10 +402,12 @@ const Emprestimos: React.FC = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Selecione um livro</option>
-                      {/* Filtra apenas livros disponíveis no formulário de novo empréstimo */}
-                      {livros.filter(livro => livro.disponivel).map(livro => (
+                      {
+                      livros.filter(livro => 
+                          livro.disponivel || (editingEmprestimo && livro._id === editingEmprestimo.livro_id)
+                      ).map(livro => (
                         <option key={livro._id} value={livro._id}>
-                          {livro.titulo} - {livro.autor}
+                          {livro.titulo} - {livro.autor} {livro.disponivel ? '' : '(Emprestado)'}
                         </option>
                       ))}
                     </select>
@@ -524,7 +511,7 @@ const Emprestimos: React.FC = () => {
                   </div>
                 </div>
                 
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Observações
                   </label>

@@ -1,8 +1,6 @@
-// src/pages/Reservas.tsx (CÓDIGO FINAL E ESTÁVEL)
-
 import React, { useState, useEffect } from 'react'
 import {Bookmark, Plus, Search, Filter, Edit, Trash2, Clock, Bell, CheckCircle, XCircle, X, Users} from 'lucide-react'
-import { reservasApi, livrosApi, Reserva, Livro } from '../lib/api' // Importa as APIs e tipos
+import { reservasApi, livrosApi, Reserva, Livro } from '../lib/api'
 import toast from 'react-hot-toast'
 import { format, addDays, isPast } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -31,7 +29,6 @@ const Reservas: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true)
-      // Chamadas robustas: se alguma falhar, retorna array vazio e não quebra o Promise.all
       const [reservasRes, livrosRes] = await Promise.all([
         reservasApi.list().catch(() => []),
         livrosApi.list().catch(() => [])
@@ -50,7 +47,7 @@ const Reservas: React.FC = () => {
 
   const getLivroInfo = (livroId: string) => {
     const livro = livros.find(l => l._id === livroId)
-    return livro || { titulo: 'Livro não encontrado', autor: '', disponivel: false, _id: livroId } // Garante que o objeto retornado tenha _id
+    return livro || { titulo: 'Livro não encontrado', autor: '', disponivel: false, _id: livroId }
   }
 
   const getProximaPrioridade = (livroId: string) => {
@@ -159,8 +156,8 @@ const Reservas: React.FC = () => {
   const filteredReservas = reservas.filter(reserva => {
     const livroInfo = getLivroInfo(reserva.livro_id)
     const matchesSearch = reserva.usuario_nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reserva.usuario_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         livroInfo.titulo.toLowerCase().includes(searchTerm.toLowerCase())
+                          reserva.usuario_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          livroInfo.titulo.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = selectedStatus === '' || reserva.status === selectedStatus
     return matchesSearch && matchesStatus
   })
@@ -174,7 +171,6 @@ const Reservas: React.FC = () => {
   }
 
   const reservasPorLivro = filteredReservas.reduce((acc, reserva) => {
-    // CORREÇÃO: Garante que o agrupamento não falhe se o ID do livro for inválido
     const livroId = reserva.livro_id;
     if (livroId) {
         if (!acc[livroId]) {
@@ -249,7 +245,6 @@ const Reservas: React.FC = () => {
 
       {/* Reservas por Livro */}
       <div className="space-y-6">
-        {/* Renderiza a lista de reservas (se houver) */}
         {Object.entries(reservasPorLivro).map(([livroId, reservasDoLivro]) => {
           const livroInfo = getLivroInfo(livroId)
           const reservasAtivas = reservasDoLivro.filter(r => r.status === 'ativa' || r.status === 'notificada')
@@ -286,8 +281,8 @@ const Reservas: React.FC = () => {
                       const expirada = isExpirada(reserva.data_expiracao, reserva.status)
                       
                       return (
-                        <div key={reserva._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                          <div className="flex items-center space-x-4">
+                        <div key={reserva._id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <div className="flex items-center space-x-4 mb-4 md:mb-0">
                             <div className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full font-semibold text-sm">
                               {reserva.prioridade || index + 1}
                             </div>
@@ -301,8 +296,8 @@ const Reservas: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="flex items-center space-x-4">
-                            <div className="text-right">
+                          <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
+                            <div className="text-left md:text-right">
                               <p className="text-sm text-gray-500">
                                 Reservado em: {format(new Date(reserva.data_reserva), 'dd/MM/yyyy', { locale: ptBR })}
                               </p>
@@ -325,7 +320,7 @@ const Reservas: React.FC = () => {
                               </span>
                             </div>
 
-                            <div className="flex space-x-2">
+                            <div className="flex flex-wrap gap-2 pt-2 md:pt-0">
                               {reserva.status === 'ativa' && livroInfo.disponivel && (
                                 <button
                                   onClick={() => handleNotificar(reserva)}
@@ -375,7 +370,7 @@ const Reservas: React.FC = () => {
                           </div>
 
                           {reserva.observacoes && (
-                            <div className="mt-2 text-xs text-gray-500 italic">
+                            <div className="mt-2 text-xs text-gray-500 italic w-full">
                               Obs: {reserva.observacoes}
                             </div>
                           )}
@@ -389,7 +384,6 @@ const Reservas: React.FC = () => {
         })}
       </div>
 
-      {/* Renderiza a mensagem de "Nenhuma reserva encontrada" apenas se a lista filtrada estiver vazia */}
       {Object.keys(reservasPorLivro).length === 0 && !loading && (
         <div className="text-center py-12">
           <Bookmark className="mx-auto h-12 w-12 text-gray-400 mb-4" />

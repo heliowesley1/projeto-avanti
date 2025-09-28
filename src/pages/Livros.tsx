@@ -1,14 +1,9 @@
-// src/pages/Livros.tsx (CORRIGIDO E COMPLETO)
-
 import React, { useState, useEffect } from 'react'
 import {BookOpen, Plus, Search, Filter, Edit, Trash2, Eye, X} from 'lucide-react'
 import { livrosApi, Livro } from '../lib/api' 
 import toast from 'react-hot-toast'
 
-// CORREÇÃO: URL de imagem padrão estável
 const DEFAULT_COVER_URL = 'https://picsum.photos/300/200?grayscale'
-
-// A interface Livro é importada de '../lib/api'
 
 const Livros: React.FC = () => {
   const [livros, setLivros] = useState<Livro[]>([])
@@ -31,12 +26,10 @@ const Livros: React.FC = () => {
   const fetchLivros = async () => {
     try {
       setLoading(true)
-      // Chamada para a API local
       const response = await livrosApi.list()
-      setLivros(response || []) // A API local retorna diretamente o array
+      setLivros(response || []) 
     } catch (error) {
       console.error('Erro ao carregar livros:', error)
-      // O erro de API 500 no console será mapeado para este toast
       toast.error('Erro ao carregar livros')
     } finally {
       setLoading(false)
@@ -47,7 +40,6 @@ const Livros: React.FC = () => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     
-    // Os campos são passados em snake_case para o backend
     const livroData: Partial<Livro> = {
       titulo: formData.get('titulo') as string,
       autor: formData.get('autor') as string,
@@ -62,7 +54,6 @@ const Livros: React.FC = () => {
       quantidade_total: parseInt(formData.get('quantidade_total') as string) || 1,
       quantidade_disponivel: parseInt(formData.get('quantidade_disponivel') as string) || 1,
       localizacao: formData.get('localizacao') as string,
-      // creator e datas são manipulados no backend
     }
 
     try {
@@ -100,8 +91,8 @@ const Livros: React.FC = () => {
 
   const filteredLivros = livros.filter(livro => {
     const matchesSearch = livro.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         livro.autor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         livro.isbn.includes(searchTerm)
+                          livro.autor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          livro.isbn.includes(searchTerm)
     const matchesCategory = selectedCategory === '' || livro.categoria === selectedCategory
     return matchesSearch && matchesCategory
   })
@@ -190,7 +181,6 @@ const Livros: React.FC = () => {
           <div key={livro._id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
             <div className="aspect-w-16 aspect-h-9">
               <img
-                // APLICAÇÃO DA CORREÇÃO
                 src={livro.capa_url || DEFAULT_COVER_URL}
                 alt={livro.titulo}
                 className="w-full h-48 object-cover"
@@ -486,7 +476,6 @@ const Livros: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <img
-                    // APLICAÇÃO DA CORREÇÃO
                     src={viewingLivro.capa_url || DEFAULT_COVER_URL}
                     alt={viewingLivro.titulo}
                     className="w-full h-64 object-cover rounded-lg"

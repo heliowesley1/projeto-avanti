@@ -2,7 +2,6 @@ import type { UserConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import { defineConfig } from 'vite'
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   let build: UserConfig['build'], esbuild: UserConfig['esbuild'], define: UserConfig['define']
 
@@ -41,18 +40,14 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       exclude: ['lucide-react'],
     },
-    // --- CORREÇÃO DO CORS: CONFIGURAÇÃO DE PROXY ---
     server: { 
       proxy: {
-        // Redireciona qualquer requisição que comece com /api para o backend
         '/api': {
           target: 'http://localhost:3000',
-          changeOrigin: true, // Necessário para evitar problemas de CORS
-          // O reescreve faz com que '/api/livros' se torne 'http://localhost:3000/api/livros'
+          changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, '/api'), 
         }
       }
     }
-    // ------------------------------------------------
   }
 })

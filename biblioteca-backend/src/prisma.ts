@@ -1,4 +1,3 @@
-// src/prisma.ts
-import { PrismaClient } from '@prisma/client'; // Deve ser 'PrismaClient'
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 export default prisma;

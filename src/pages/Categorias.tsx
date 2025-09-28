@@ -1,11 +1,7 @@
-// src/pages/Categorias.tsx (Refatorado para usar a API local)
-
 import React, { useState, useEffect } from 'react'
 import {Tag, Plus, Search, Edit, Trash2, X} from 'lucide-react'
-import { categoriasApi, Categoria } from '../lib/api' // <--- USANDO A NOVA API LOCAL
+import { categoriasApi, Categoria } from '../lib/api' 
 import toast from 'react-hot-toast'
-
-// A interface Categoria é importada de '../lib/api'
 
 const Categorias: React.FC = () => {
   const [categorias, setCategorias] = useState<Categoria[]>([])
@@ -26,9 +22,8 @@ const Categorias: React.FC = () => {
   const fetchCategorias = async () => {
     try {
       setLoading(true)
-      // Chamada para a API local (substituindo lumi.entities.categorias.list)
       const response = await categoriasApi.list() 
-      setCategorias(response || []) // A API local retorna diretamente o array
+      setCategorias(response || []) 
     } catch (error) {
       console.error('Erro ao carregar categorias:', error)
       toast.error('Erro ao carregar categorias')
@@ -48,19 +43,16 @@ const Categorias: React.FC = () => {
       cor: formData.get('cor') as string,
       ativa: formData.get('ativa') === 'true',
       ordem: parseInt(formData.get('ordem') as string) || 1,
-      total_livros: parseInt(formData.get('total_livros') as string) || 0, // snake_case
-      // creator e datas são manipulados no backend
+      total_livros: parseInt(formData.get('total_livros') as string) || 0,
     }
 
     try {
       if (editingCategoria) {
-        // Chamada para a API local (substituindo lumi.entities.categorias.update)
         await categoriasApi.update(editingCategoria._id, {
           ...categoriaData
         })
         toast.success('Categoria atualizada com sucesso!')
       } else {
-        // Chamada para a API local (substituindo lumi.entities.categorias.create)
         await categoriasApi.create(categoriaData)
         toast.success('Categoria criada com sucesso!')
       }
@@ -77,7 +69,6 @@ const Categorias: React.FC = () => {
   const handleDelete = async (id: string, nome: string) => {
     if (confirm(`Tem certeza que deseja excluir a categoria "${nome}"?`)) {
       try {
-        // Chamada para a API local (substituindo lumi.entities.categorias.delete)
         await categoriasApi.delete(id)
         toast.success('Categoria excluída com sucesso!')
         fetchCategorias()
@@ -90,7 +81,6 @@ const Categorias: React.FC = () => {
 
   const toggleStatus = async (categoria: Categoria) => {
     try {
-      // Chamada para a API local (substituindo lumi.entities.categorias.update)
       await categoriasApi.update(categoria._id, {
         ativa: !categoria.ativa
       })

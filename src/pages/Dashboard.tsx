@@ -1,10 +1,7 @@
-// src/pages/Dashboard.tsx (CORREÇÃO FINAL DE CARREGAMENTO DE DADOS)
-
 import React, { useState, useEffect } from 'react'
 import {BookOpen, Users, Calendar, Bookmark, TrendingUp, AlertTriangle, CheckCircle, Clock} from 'lucide-react'
-// Importa todos os tipos e APIs do wrapper local
 import { livrosApi, emprestimosApi, reservasApi, categoriasApi, autoresApi, 
-         Livro, Emprestimo, Reserva, Categoria, Autor } from '../lib/api'
+          Livro, Emprestimo, Reserva, Categoria, Autor } from '../lib/api'
 
 interface DashboardStats {
   totalLivros: number
@@ -13,7 +10,7 @@ interface DashboardStats {
   emprestimosAtrasados: number
   reservasAtivas: number
   totalCategorias: number
-  totalAutores: number // Adicionando total de autores para uso futuro
+  totalAutores: number
 }
 
 const Dashboard: React.FC = () => {
@@ -34,23 +31,18 @@ const Dashboard: React.FC = () => {
       try {
         setLoading(true)
         
-        // --- FUNÇÃO DE CARREGAMENTO ROBUSTA ---
         const [livros, emprestimos, reservas, categorias, autores] = await Promise.all([
-          livrosApi.list().catch(() => []), // Retorna array vazio em caso de falha para não quebrar o Promise.all
+          livrosApi.list().catch(() => []),
           emprestimosApi.list().catch(() => []),
           reservasApi.list().catch(() => []),
           categoriasApi.list().catch(() => []),
           autoresApi.list().catch(() => [])
         ]) as [Livro[], Emprestimo[], Reserva[], Categoria[], Autor[]];
-        // ------------------------------------
-
-        // Cálculo das estatísticas
+        
         const livrosDisponiveis = livros.filter(livro => livro.disponivel).length
         const emprestimosAtivos = emprestimos.filter(emp => emp.status === 'ativo' || emp.status === 'renovado').length
         
-        // Atrasado = status != 'devolvido' e data de devolução prevista é passada
         const emprestimosAtrasados = emprestimos.filter(emp => {
-          // O tipo Date() pode aceitar a string, mas a verificação de null deve ser feita
           return (emp.status === 'ativo' || emp.status === 'renovado') && new Date(emp.data_devolucao_prevista) < new Date()
         }).length
         
@@ -66,7 +58,6 @@ const Dashboard: React.FC = () => {
           totalAutores: autores.length
         })
 
-        // Atividade recente
         const recentEmprestimos = emprestimos
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 3)

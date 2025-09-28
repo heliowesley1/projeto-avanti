@@ -1,10 +1,8 @@
-// src/pages/Home.tsx (FINAL COM DADOS REAIS)
-
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {BookOpen, Users, Calendar, Bookmark, ArrowRight, BarChart3, Clock, CheckCircle} from 'lucide-react'
 import { livrosApi, emprestimosApi, reservasApi, autoresApi, 
-         Livro, Emprestimo, Reserva, Autor } from '../lib/api'
+          Livro, Emprestimo, Reserva, Autor } from '../lib/api'
 import toast from 'react-hot-toast'
 
 interface HomeStats {
@@ -28,7 +26,6 @@ const Home: React.FC = () => {
       try {
         setLoading(true)
         
-        // Chamadas para as APIs (tolerante a erros para não quebrar)
         const [livros, emprestimos, reservas, autores] = await Promise.all([
           livrosApi.list().catch(() => []),
           emprestimosApi.list().catch(() => []),
@@ -36,7 +33,6 @@ const Home: React.FC = () => {
           autoresApi.list().catch(() => [])
         ]) as [Livro[], Emprestimo[], Reserva[], Autor[]];
         
-        // CÁLCULO
         const emprestimosAtivos = emprestimos.filter(emp => emp.status === 'ativo' || emp.status === 'renovado').length
         const reservasPendentes = reservas.filter(res => res.status === 'ativa' || res.status === 'notificada').length
 
