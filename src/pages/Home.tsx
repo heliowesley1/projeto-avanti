@@ -1,9 +1,70 @@
+// src/pages/Home.tsx (FINAL COM DADOS REAIS)
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {BookOpen, Users, Calendar, Bookmark, ArrowRight, BarChart3, Clock, CheckCircle} from 'lucide-react'
+import { livrosApi, emprestimosApi, reservasApi, autoresApi, 
+         Livro, Emprestimo, Reserva, Autor } from '../lib/api'
+import toast from 'react-hot-toast'
+
+interface HomeStats {
+  totalLivros: number
+  emprestimosAtivos: number
+  reservasPendentes: number
+  totalAutores: number
+}
 
 const Home: React.FC = () => {
+  const [stats, setStats] = useState<HomeStats>({
+    totalLivros: 0,
+    emprestimosAtivos: 0,
+    reservasPendentes: 0,
+    totalAutores: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchRealStats = async () => {
+      try {
+        setLoading(true)
+        
+        // Chamadas para as APIs (tolerante a erros para não quebrar)
+        const [livros, emprestimos, reservas, autores] = await Promise.all([
+          livrosApi.list().catch(() => []),
+          emprestimosApi.list().catch(() => []),
+          reservasApi.list().catch(() => []),
+          autoresApi.list().catch(() => [])
+        ]) as [Livro[], Emprestimo[], Reserva[], Autor[]];
+        
+        // CÁLCULO
+        const emprestimosAtivos = emprestimos.filter(emp => emp.status === 'ativo' || emp.status === 'renovado').length
+        const reservasPendentes = reservas.filter(res => res.status === 'ativa' || res.status === 'notificada').length
+
+        setStats({
+          totalLivros: livros.length,
+          emprestimosAtivos,
+          reservasPendentes,
+          totalAutores: autores.length
+        })
+
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas da Home:', error)
+        toast.error('Erro ao carregar estatísticas iniciais.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchRealStats()
+  }, [])
+  
+  const statCards = [
+    { label: 'Livros no Acervo', value: stats.totalLivros, icon: BookOpen, color: 'text-blue-600' },
+    { label: 'Empréstimos Ativos', value: stats.emprestimosAtivos, icon: Calendar, color: 'text-green-600' },
+    { label: 'Reservas Pendentes', value: stats.reservasPendentes, icon: Bookmark, color: 'text-purple-600' },
+    { label: 'Autores Cadastrados', value: stats.totalAutores, icon: Users, color: 'text-orange-600' }
+  ]
+
   const features = [
     {
       icon: BookOpen,
@@ -35,12 +96,13 @@ const Home: React.FC = () => {
     }
   ]
 
-  const stats = [
-    { label: 'Livros no Acervo', value: '1,247', icon: BookOpen, color: 'text-blue-600' },
-    { label: 'Empréstimos Ativos', value: '89', icon: Calendar, color: 'text-green-600' },
-    { label: 'Reservas Pendentes', value: '23', icon: Bookmark, color: 'text-purple-600' },
-    { label: 'Usuários Cadastrados', value: '456', icon: Users, color: 'text-orange-600' }
-  ]
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-12">
@@ -80,14 +142,14 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats Section (AGORA COM DADOS REAIS) */}
       <section className="py-12">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
             Estatísticas em Tempo Real
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => {
+            {statCards.map((stat, index) => {
               const Icon = stat.icon
               return (
                 <div key={index} className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow duration-200">
@@ -97,7 +159,7 @@ const Home: React.FC = () => {
                         {stat.label}
                       </p>
                       <p className={`text-3xl font-bold ${stat.color}`}>
-                        {stat.value}
+                        {stat.value.toLocaleString('pt-BR')}
                       </p>
                     </div>
                     <Icon className={`h-8 w-8 ${stat.color}`} />

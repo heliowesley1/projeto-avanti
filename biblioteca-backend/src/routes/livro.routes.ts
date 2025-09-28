@@ -1,4 +1,4 @@
-// biblioteca-backend/src/routes/livro.routes.ts (CORREÇÃO FINAL DE INSERT)
+// biblioteca-backend/src/routes/livro.routes.ts (CORREÇÃO FINAL DE INSERT ROBUSTO)
 
 import { Router } from 'express';
 import type { Livro as LivroPrisma } from '@prisma/client'; 
@@ -25,8 +25,6 @@ const mapLivroToFrontend = (livro: LivroPrisma) => ({
     createdAt: livro.createdAt.toISOString(),
     updatedAt: livro.updatedAt.toISOString(),
 });
-
-// ... (GET /:id e GET / mantidos) ...
 
 // [GET] /api/livros/:id: Obter por ID
 livroRouter.get('/:id', async (req, res) => {
@@ -62,23 +60,37 @@ livroRouter.get('/', async (req, res) => {
     }
 });
 
-// [POST] /api/livros: Criar (CORREÇÃO DE INSERT)
+// [POST] /api/livros: Criar (CORREÇÃO DE INSERT EXPLÍCITA)
 livroRouter.post('/', async (req, res) => {
-    const { ano_publicacao, quantidade_total, quantidade_disponivel, paginas, editora, sinopse, capa_url, localizacao, ...rest } = req.body;
+    const { 
+        titulo, autor, isbn, categoria, disponivel, // Campos do Body
+        ano_publicacao, quantidade_total, quantidade_disponivel, 
+        paginas, editora, sinopse, capa_url, localizacao 
+    } = req.body;
     
-    // Converte para null se o campo for undefined ou string vazia, caso contrário, usa o valor.
+    // 1. Lógica para converter campos opcionais e numéricos, tratando nulls e strings vazias.
     const paginasPrisma = paginas !== undefined && paginas !== '' ? parseInt(paginas) : null;
     const editoraPrisma = editora || null;
     const sinopsePrisma = sinopse || null;
     const capaUrlPrisma = capa_url || null;
     const localizacaoPrisma = localizacao || null;
 
+    const qtdeDisp = parseInt(quantidade_disponivel) || 1;
+    
+    // 2. Mapeamento explícito para o formato do modelo Prisma (mesmo nome, sem ...rest)
     const dataToPrisma = {
-        ...rest,
+        titulo: titulo,
+        autor: autor,
+        isbn: isbn,
+        categoria: categoria,
+        
+        // Mapeamentos obrigatórios para camelCase
         anoPublicacao: parseInt(ano_publicacao),
         quantidadeTotal: parseInt(quantidade_total) || 1,
-        quantidadeDisponivel: parseInt(quantidade_disponivel) || 1,
-        disponivel: (parseInt(quantidade_disponivel) || 1) > 0,
+        quantidadeDisponivel: qtdeDisp,
+        
+        // Mapeamento de opcionais
+        disponivel: disponivel === true || qtdeDisp > 0, // Garante que o status 'disponivel' é booleano
         paginas: paginasPrisma,
         editora: editoraPrisma,
         sinopse: sinopsePrisma,
@@ -94,6 +106,10 @@ livroRouter.post('/', async (req, res) => {
         return res.status(201).json(mapLivroToFrontend(novoLivro));
 
     } catch (error) {
+        // Log detalhado para o console do servidor
+        console.error('Erro detalhado ao criar livro (Verifique log para tipos/campos):', error);
+        
+        // Retorno genérico para o cliente
         return res.status(400).json({ error: 'Erro ao criar livro. Verifique os dados fornecidos.' });
     }
 });
@@ -133,8 +149,7 @@ livroRouter.put('/:id', async (req, res) => {
     }
 });
 
-// ... (DELETE /:id mantido) ...
-
+// [DELETE] /api/livros/:id: Deletar
 livroRouter.delete('/:id', async (req, res) => {
     try {
         await prisma.livro.delete({ where: { id: req.params.id } });

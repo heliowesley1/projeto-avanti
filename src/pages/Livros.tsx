@@ -1,9 +1,12 @@
-// src/pages/Livros.tsx (CORRIGIDO)
+// src/pages/Livros.tsx (CORRIGIDO E COMPLETO)
 
 import React, { useState, useEffect } from 'react'
 import {BookOpen, Plus, Search, Filter, Edit, Trash2, Eye, X} from 'lucide-react'
-import { livrosApi, Livro } from '../lib/api' // <--- IMPORT CORRIGIDO
+import { livrosApi, Livro } from '../lib/api' 
 import toast from 'react-hot-toast'
+
+// CORREÇÃO: URL de imagem padrão estável
+const DEFAULT_COVER_URL = 'https://picsum.photos/300/200?grayscale'
 
 // A interface Livro é importada de '../lib/api'
 
@@ -187,7 +190,8 @@ const Livros: React.FC = () => {
           <div key={livro._id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
             <div className="aspect-w-16 aspect-h-9">
               <img
-                src={livro.capa_url || 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg'}
+                // APLICAÇÃO DA CORREÇÃO
+                src={livro.capa_url || DEFAULT_COVER_URL}
                 alt={livro.titulo}
                 className="w-full h-48 object-cover"
               />
@@ -482,7 +486,8 @@ const Livros: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <img
-                    src={viewingLivro.capa_url || 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg'}
+                    // APLICAÇÃO DA CORREÇÃO
+                    src={viewingLivro.capa_url || DEFAULT_COVER_URL}
                     alt={viewingLivro.titulo}
                     className="w-full h-64 object-cover rounded-lg"
                   />

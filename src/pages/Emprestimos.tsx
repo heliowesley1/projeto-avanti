@@ -1,7 +1,7 @@
 // src/pages/Emprestimos.tsx (Refatorado para usar a API local)
 
 import React, { useState, useEffect } from 'react'
-import {Calendar, Plus, Search, Filter, Edit, Trash2, Clock, CheckCircle, AlertTriangle, X, RefreshCw} from 'lucide-react'
+import {Calendar, Plus, Search, Filter, Edit, Trash2, CheckCircle, AlertTriangle, X, RefreshCw} from 'lucide-react'
 import { emprestimosApi, livrosApi, Emprestimo, Livro } from '../lib/api' // <--- USANDO AS NOVAS APIs LOCAIS
 import toast from 'react-hot-toast'
 import { format, addDays, isPast, differenceInDays } from 'date-fns'
@@ -128,6 +128,7 @@ const Emprestimos: React.FC = () => {
   }
 
   const handleRenovar = async (emprestimo: Emprestimo) => {
+    // CORREÇÃO: Trata renovacoes como opcional com valor padrão de 0
     if ((emprestimo.renovacoes || 0) >= 3) {
       toast.error('Limite de renovações atingido (máximo 3)')
       return
@@ -312,7 +313,8 @@ const Emprestimos: React.FC = () => {
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusInfo.color}`}>
                       {statusInfo.label}
                     </span>
-                    {emprestimo.renovacoes > 0 && (
+                    {/* CORREÇÃO: Usa (emprestimo.renovacoes || 0) para tratar 'undefined' */}
+                    {(emprestimo.renovacoes || 0) > 0 && (
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                         {emprestimo.renovacoes} renovação(ões)
                       </span>
@@ -336,7 +338,8 @@ const Emprestimos: React.FC = () => {
                           Devolver
                         </button>
                         
-                        {emprestimo.renovacoes && emprestimo.renovacoes < 3 && (
+                        {/* CORREÇÃO: Usa (emprestimo.renovacoes || 0) para verificação */}
+                        {(emprestimo.renovacoes || 0) < 3 && (
                           <button
                             onClick={() => handleRenovar(emprestimo)}
                             className="bg-yellow-50 text-yellow-600 px-3 py-1 rounded text-sm hover:bg-yellow-100 transition-colors flex items-center"
